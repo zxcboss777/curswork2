@@ -1,50 +1,35 @@
+from __future__ import annotations
+
+import abc
+import logging
+from typing import Any
+
 import requests
-from abc import ABC, abstractmethod
 
-class JobAPI(ABC):
-    """Абстрактный класс для работы с API"""
+logger = logging.getLogger(__name__)
 
-    @abstractmethod
-    def _connect_to_api(self, url: str, params: dict):
-        """Приватный метод подключения к API"""
-        pass
 
-    @abstractmethod
-    def get_vacancies(self, query):
-        """Метод для получения списка вакансий по запросу"""
-        pass
+class JobAPI(abc.ABC):
+    """Абстрактный интерфейс любого job-API."""
+
+    @abc.abstractmethod
+    def get_vacancies(self, query: str, per_page: int = 100) -> list[dict[str, Any]]:
+        """Вернуть &laquo;сырые&raquo; вакансии списком словарей."""
 
 
 class HeadHunterAPI(JobAPI):
-    """Класс для работы с API HeadHunter (hh.ru)"""
+    """Адаптер к публичному API hh.ru."""
 
+    _BASE_URL = "https://api.hh.ru/vacancies"
 
-    def __init__(self):
-        self._URL = 'https://api.hh.ru/vacancies'
-        self._per_page = 15
+    # ­­­­­­­­­­­­­­­­­­­­­­­­­­ helpers
+    def _request(self, params: dict[str, Any]) -> dict[str, Any]:
+        resp = requests.get(self._BASE_URL, params=params, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
 
-
-    def _connect_to_api(self, url: str, params: dict):
-        """Приватный метод подключения к API"""
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            return response
-        except requests.RequestException as e:
-            print(f"Ошибка подключения: {e}")
-            return None
-
-
-    def get_vacancies(self, query: str):
-        """Получает вакансии с hh.ru по указанному запросу"""
-        params = {
-            'text': query,  # Ключевое слово для поиска
-            'per_page': self._per_page # Количество вакансий на одной странице
-        }
-
-        # Используем приватный метод подключения
-        response = self._connect_to_api(self._URL, params)
-
-        if response:
-            return response.json().get('items', [])
-        return []
+    # ­­­­­­­­­­­­­­­­­­­­­­­­­­ public
+    def get_vacancies(self, query: str, per_page: int = 100) -> list[dict[str, Any]]:
+        params = {"text": query, "per_page": per_page}
+        logger.debug("HH-API params: %s", params)
+        return self._request(params).get("items", [])
