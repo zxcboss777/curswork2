@@ -42,7 +42,7 @@ class Vacancy:
     def _cmp_value(self) -> int:
         return self.salary_from or 0
 
-    def __eq__(self, other: Any) -> bool:  # type: ignore[override] – mypy OK
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Vacancy):
             return NotImplemented
         return self._cmp_value() == other._cmp_value()
