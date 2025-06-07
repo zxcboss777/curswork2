@@ -56,11 +56,14 @@ def user_interaction():
             except ValueError:
                 print('Введите корректное число: ')
                 continue
+from __future__ import annotations
 
             vacancies = json_saver.get_vacancies()
             if not vacancies:
                 print('Нет вакансий')
                 continue
+import argparse
+import textwrap
 
             #Сортируем вакансии по зп
             sorted_vacancies = sorted(
